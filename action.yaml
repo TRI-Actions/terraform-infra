@@ -1,0 +1,231 @@
+---
+name: terraform-infra
+description: Template file for using github actions with terraform for terraform-infra repos
+branding:
+  icon: 'chevron-right'
+  color: 'blue'
+
+runs:
+  using: composite
+  steps:
+    - name: Check out repository code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number) || '' }}
+
+    - name: Get Head Sha
+      id: sha
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const pr = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          const headSha = pr.data.head.sha;
+          core.setOutput('sha', headSha)
+    
+
+    - name: Retrieve private access key and ssh hosts
+      shell: bash
+      run: |
+        aws --region us-east-1 ssm get-parameters --name /tri-ie/SharedServices/JenkinsMaster/GitAccessPrivateKey --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa
+        chmod 0400 ~/.ssh/id_rsa
+        mkdir -p ~/.ssh
+        ssh-keyscan -t rsa github.awsinternal.tri.global >> ~/.ssh/known_hosts
+        ssh-keyscan -t rsa github.shared-services.aws.tri.global >> ~/.ssh/known_hosts
+
+    ##############################################
+    #                                            #
+    #            Terraform Plan                  #
+    #                                            #
+    ##############################################
+
+    - name: Create plan status check
+      uses: actions/github-script@v6
+      id: plan_status_check
+      with:
+        script: |
+          const formatDate = () => {
+            return new Date().toISOString()
+          }
+          const check = await github.rest.checks.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'TerraformPlan',
+            head_sha: `${{steps.sha.outputs.sha}}`,
+            started_at: formatDate(),
+            status: 'in_progress'
+          })
+          core.setOutput('CHECK_ID', check.data.id)
+    - name: Setup Terraform
+      uses: infrastructure/setup-terraform@v0.0.1
+      with:
+        terraform_wrapper: true
+
+    - name: Terraform fmt
+      id: fmt
+      shell: bash
+      run: terraform fmt -check
+      continue-on-error: false
+      working-directory: terraform
+    
+    - name: Terraform Init
+      id: init
+      shell: bash
+      run: terraform init
+      working-directory: terraform
+    
+    - name: Terraform Validate
+      id: validate
+      shell: bash
+      run: terraform validate -no-color
+      working-directory: terraform
+
+    - name: Terraform - Plan
+      id: plan
+      shell: bash
+      run: |
+        terraform plan -no-color -out=${GITHUB_WORKSPACE}/plan.tfplan
+        terraform show -no-color ${GITHUB_WORKSPACE}/plan.tfplan > ${GITHUB_WORKSPACE}/plan.out
+      working-directory: terraform
+    
+    - name: Post plan outputs and update status check
+      if: always() && !contains(github.event.comment.body, 'GithubDeploy')
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const formatDate = () => {
+            return new Date().toISOString()
+          }
+          github.rest.checks.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            check_run_id:  '${{ steps.plan_status_check.outputs.CHECK_ID }}',
+            status: 'completed',
+            completed_at: formatDate(),
+            conclusion: '${{ steps.plan.conclusion }}'
+          })
+          const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+          const run_link = '<a href="' + run_url + '">Actions</a>.'
+          const fs = require('fs')
+          const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
+          const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
+          const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
+          const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+          <details><summary>Validation Output</summary>
+    
+          ~~~
+          ${{ steps.validate.outputs.stdout }}
+          ~~~
+    
+          </details>
+    
+          #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+    
+          <details><summary>Show Plan</summary>
+    
+          ~~~
+          ${plan}
+          ~~~
+    
+          </details>
+
+          Respond with \`GithubDeploy\` to deploy and merge changes.
+          ${truncated_message}`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    ##############################################
+    #                                            #
+    #            Terraform Apply                 #
+    #                                            #
+    ##############################################
+
+    - name: Create apply status check
+      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
+      uses: actions/github-script@v6
+      id: apply_status_check
+      with:
+        script: |
+          const formatDate = () => {
+            return new Date().toISOString()
+          }
+          const check = await github.rest.checks.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'TerraformApply',
+            head_sha: `${{steps.sha.outputs.sha}}`,
+            started_at: formatDate(),
+            status: 'in_progress'
+          })
+          core.setOutput('CHECK_ID', check.data.id)
+    - name: Terraform - Apply
+      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
+      id: apply
+      shell: bash
+      run: |
+        terraform apply -auto-approve -no-color ${GITHUB_WORKSPACE}/plan.tfplan > ${GITHUB_WORKSPACE}/apply.out
+      working-directory: terraform
+
+    - name: Post apply outputs and update status check
+      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const formatDate = () => {
+            return new Date().toISOString()
+          }
+          github.rest.checks.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            check_run_id:  '${{ steps.apply_status_check.outputs.CHECK_ID }}',
+            status: 'completed',
+            completed_at: formatDate(),
+            conclusion: '${{ steps.apply.conclusion }}'
+          })
+          const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+          const run_link = '<a href="' + run_url + '">Actions</a>.'
+          const fs = require('fs')
+          const apply_out_file = fs.readFileSync('apply.out', 'utf8').toString()
+          const apply_out = apply_out_file.length > 65000 ? "...\n" + apply_out_file.substring(apply_out_file.length - 65000) : apply_out_file
+          const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
+          const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          #### Terraform Apply 📖 \`${{ steps.apply.outcome }}\`
+    
+          <details><summary>Show Apply Output</summary>
+    
+          ~~~
+          ${apply_out}
+          ~~~
+    
+          </details>
+          ${truncated_message}`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    - name: Merge Branch
+      uses: actions/github-script@v6
+      if: ${{ job.status == 'success' && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
+      with:
+        script: |
+            github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+  

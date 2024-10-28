@@ -1,3 +1,4 @@
+---
 name: main_update
 run-name: >-
   ${{ github.event.issue.number && format('terraform_infra_update | PR-{0}', github.event.issue.number)
