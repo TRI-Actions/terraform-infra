@@ -1,3 +1,4 @@
+---
 name: terraform-infra
 description: Template file for using github actions with terraform for terraform-infra repos
 branding:
