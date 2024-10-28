@@ -1,0 +1,51 @@
+name: main_update
+run-name: >-
+  ${{ github.event.issue.number && format('terraform_infra_update | PR-{0}', github.event.issue.number)
+  || 'terraform-infra Branch Update' }}
+
+permissions: read-all
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    runs-on: codebuild-test-codebuild-runner-terraform-infra-${{ github.run_id }}-${{ github.run_attempt }}
+    name: linting
+    permissions: write-all
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number) || '' }}
+          fetch-depth: 0
+
+      - name: Alert User to tests
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "If you would like to test your changes, comment `test` on your branch. Pipeline will pull the latest from branch `test`"
+            })
+
+      - name: Basic Linting
+        uses: github/super-linter/slim@v7
+        env:
+          DEFAULT_BRANCH: "origin/${{ github.head_ref }}"
+          VALIDATE_YAML_PRETTIER: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_TERRAFORM_TERRASCAN: false
+          VALIDATE_CHECKOV: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      
