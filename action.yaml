@@ -63,12 +63,6 @@ runs:
       with:
         terraform_wrapper: true
 
-    - name: Setup env
-      shell: bash
-      run: |
-        sed -i 's/$env/${{ steps.get-label.outputs.environment }}/g' backend.tf
-      working-directory: terraform
-
     - name: Terraform fmt
       id: fmt
       shell: bash
