@@ -6,7 +6,7 @@ This is a custom module for use by terraform-<org>-infra repositories, such as t
 
 ## How To Use
 
-1. Create a Pull Request from your local branch 
+1. Create a Pull Request from your local branch
 2. Wait for checks to complete, these are basic linting scripts from super-linter
 
 ## How To Test
@@ -20,4 +20,3 @@ After commenting anything, the pipeline under action.yaml will begin executing a
 .github/workflows/test-flow.yaml manages this execution. Any resources created by the custom module will automatically be deleted after creation.
 
 Merging into main branch is blocked by the requirement for code review. Comment `GithubDeploy` to merge with main after approval. Do not remove this setting, bypass protections manually if needed.
-
