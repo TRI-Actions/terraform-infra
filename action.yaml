@@ -77,6 +77,7 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
+          const { exec } = require('child_process');
           let account_diff;
           exec("git diff origin/master --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
 
