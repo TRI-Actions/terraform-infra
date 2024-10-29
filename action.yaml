@@ -93,7 +93,7 @@ runs:
             console.log(`stdout: ${stdout}`);
             account_diff = stdout.split('\n');
           });
-
+          console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
           for( let i = 0; i < account_diff.length; i++) {
             console.log(account_diff[i]);
