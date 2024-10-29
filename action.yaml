@@ -78,7 +78,7 @@ runs:
       with:
         script: |
           const { exec:runCommand } = require('child_process');
-          runCommand("git fetch origin/main", (fetchError, fetchStdout, fetchStderr) => {
+          runCommand("git fetch origin main", (fetchError, fetchStdout, fetchStderr) => {
             if (fetchError) {
                 console.error(`Fetch error: ${fetchError}`);
                 return;
