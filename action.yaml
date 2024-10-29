@@ -89,8 +89,19 @@ runs:
           for( let i = 0; i < account_diff.length; i++) {
 
             execSync("rm -rf .terraform");
+            let myMap: Map<string, number> = new Map<string, number>();
 
-            execSync("terraform init -no-color -input=false -get=true");
+            let backendConfig: Map<string, string> = new Map<string, string>();
+
+            backendConfig.set("key", `${account_diff[i]}/terraform.tfstate`);
+            backendConfig.set("bucket", 'tri-tf-state-us-east-1');
+            backendConfig.set("region", 'us-east-1');
+            backendConfig.set("dynamodb_table", 'tri_tf_state');
+            backendConfig.set("encrypt", 'true');
+
+            execSync(`cd ${account_diff[i]}`)
+
+            execSync(`terraform init -no-color -input=false -get=true ${backendConfig}`);
 
             execSync("terraform validate -no-color");
 
@@ -139,6 +150,7 @@ runs:
               repo: context.repo.repo,
               body: output
             })
+            execSync(`cd ..`)
           }
 
     ##############################################
