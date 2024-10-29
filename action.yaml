@@ -79,9 +79,10 @@ runs:
         script: |
           const { exec:runCommand } = require('child_process');
           runCommand("git fetch origin", (fetchError, fetchStdout, fetchStderr) => {
-          if (fetchError) {
-              console.error(`Fetch error: ${fetchError}`);
-              return;
+            if (fetchError) {
+                console.error(`Fetch error: ${fetchError}`);
+                return;
+            }
           }
 
           let account_diff = "";
