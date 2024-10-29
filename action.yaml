@@ -74,13 +74,12 @@ runs:
 
     - name: Execute terraform plan steps
       id: terraform
-      working-directory: terraform
       uses: actions/github-script@v6
       with:
         script: |
           const { exec } = require('child_process');
           let account_diff;
-          exec("git diff origin/master --name-only modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
+          exec("git diff origin/master --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
 
           for( let i = 0; i < account_diff.size(); i++) {
             exec("rm -rf .terraform");
