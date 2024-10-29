@@ -81,13 +81,12 @@ runs:
           const { execSync } = require('child_process');
 
           let account_diff = [];
-          const stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr));
+          let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().split('\n');
 
           console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
           for( let i = 0; i < account_diff.length; i++) {
-            console.log(account_diff[i]);
 
             execSync("rm -rf .terraform");
 
@@ -97,18 +96,8 @@ runs:
 
             let module = "";
             
-            execSync("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", (error, stdout, stderr) => {
-              if (error) {
-                  console.error(`exec error: ${error}`);
-                  return;
-              }
-              if (stderr) {
-                  console.error(`stderr: ${stderr}`);
-                  return;
-              }
-              console.log(`stdout: ${stdout}`);
-              module = stdout;
-            });
+            stdout = execSync("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'");
+            module = stdout;
 
             let planOut = "";
             execSync("terraform plan -target = 'module.${module}' -out=plan.out");
