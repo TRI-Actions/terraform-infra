@@ -97,10 +97,10 @@ runs:
             let module = "";
             
             stdout = execSync("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'");
-            module = stdout;
+            module = stdout.toString();
 
             let planOut = "";
-            execSync("terraform plan -target = 'module.${module}' -out=plan.out");
+            execSync("terraform plan -target='module.${module}' -out=plan.out");
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
