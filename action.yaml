@@ -77,22 +77,22 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          const { exec } = require('child_process');
+          const { exec:runCommand } = require('child_process');
           let account_diff;
-          exec("git diff origin/master --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
+          runCommand("git diff origin/master --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
 
           for( let i = 0; i < account_diff.size(); i++) {
-            exec("rm -rf .terraform");
+            runCommand("rm -rf .terraform");
 
-            exec("terraform init -no-color -input=false -get=true");
+            runCommand("terraform init -no-color -input=false -get=true");
 
-            exec("terraform validate -no-color");
+            runCommand("terraform validate -no-color");
 
             let module;
-            exec("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", module);
+            runCommand("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", module);
 
             let planOut;
-            exec("terraform plan -target = 'module.${module}' -out=plan.out");
+            runCommand("terraform plan -target = 'module.${module}' -out=plan.out");
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
