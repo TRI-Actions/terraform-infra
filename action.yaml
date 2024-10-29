@@ -59,17 +59,82 @@ runs:
             status: 'in_progress'
           })
           core.setOutput('CHECK_ID', check.data.id)
+
     - name: Setup Terraform
       uses: infrastructure/setup-terraform@v0.0.1
       with:
         terraform_wrapper: true
-
+    
     - name: Terraform fmt
       id: fmt
       shell: bash
       run: terraform fmt -check
       continue-on-error: false
       working-directory: terraform
+
+    - name: Execute terraform plan steps
+      id: terraform
+      working-directory: terraform
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { exec } = require('child_process');
+          let account_diff;
+          exec("git diff origin/master --name-only modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
+
+          for( let i = 0; i < account_diff.size(); i++) {
+            exec("rm -rf .terraform");
+
+            exec("terraform init -no-color -input=false -get=true");
+
+            exec("terraform validate -no-color");
+
+            let module;
+            exec("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", module);
+
+            let planOut;
+            exec("terraform plan -target = 'module.${module}' -out=plan.out");
+
+            const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+            const run_link = '<a href="' + run_url + '">Actions</a>.'
+            const fs = require('fs')
+            const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
+            const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
+            const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
+            const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            //#### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
+            //#### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
+            //<details><summary>Validation Output</summary>
+      
+            //~~~
+            //${{ steps.validate.outputs.stdout }}
+            //~~~
+      
+            //</details>
+      
+            #### Terraform Plan 📖
+      
+            <details><summary>Show Plan</summary>
+      
+            ~~~
+            ${plan}
+            ~~~
+      
+            </details>
+
+            Respond with \`GithubDeploy\` to deploy and merge changes.
+            ${truncated_message}`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+          }
+
+    
     
     - name: Terraform Init
       id: init
