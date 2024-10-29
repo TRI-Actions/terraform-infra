@@ -99,7 +99,7 @@ runs:
             //backendConfig.set("dynamodb_table", 'tri_tf_state');
             //backendConfig.set("encrypt", 'true');
 
-            execSync(`cd ${account_diff[i]}`)
+            execSync(`cd modules/${account_diff[i]}`)
 
             execSync(`terraform init -no-color -input=false -get=true`);
 
@@ -120,7 +120,7 @@ runs:
               repo: context.repo.repo,
               body: output
             })
-            execSync(`cd ..`)
+            execSync(`cd ../..`)
           }
 
     ##############################################
