@@ -86,6 +86,7 @@ runs:
 
           console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
+          execSync("cd terraform");
           for( let i = 0; i < account_diff.length; i++) {
 
             execSync("rm -rf .terraform");
