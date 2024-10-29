@@ -78,10 +78,10 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          const { execSync:runCommand } = require('child_process');
+          const { execSync } = require('child_process');
 
           let account_diff = [];
-          runCommand("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr) => {
+          execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr) => {
             if (error) {
                 console.error(`exec error: ${error}`);
                 return;
@@ -91,22 +91,22 @@ runs:
                 return;
             }
             console.log(`stdout: ${stdout}`);
-            account_diff = stdout.split('\n');
+            account_diff = stdout.toString().split('\n');
           });
           console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
           for( let i = 0; i < account_diff.length; i++) {
             console.log(account_diff[i]);
 
-            runCommand("rm -rf .terraform");
+            execSync("rm -rf .terraform");
 
-            runCommand("terraform init -no-color -input=false -get=true");
+            execSync("terraform init -no-color -input=false -get=true");
 
-            runCommand("terraform validate -no-color");
+            execSync("terraform validate -no-color");
 
             let module = "";
             
-            runCommand("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", (error, stdout, stderr) => {
+            execSync("head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'", (error, stdout, stderr) => {
               if (error) {
                   console.error(`exec error: ${error}`);
                   return;
@@ -120,7 +120,7 @@ runs:
             });
 
             let planOut = "";
-            runCommand("terraform plan -target = 'module.${module}' -out=plan.out");
+            execSync("terraform plan -target = 'module.${module}' -out=plan.out");
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
