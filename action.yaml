@@ -116,8 +116,8 @@ runs:
             const run_link = '<a href="' + run_url + '">Actions</a>.'
             const fs = require('fs')
             const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
-            const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
-            const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
+            //const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
+            //const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
             const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
             //#### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
@@ -205,7 +205,7 @@ runs:
           const fs = require('fs')
           const apply_out_file = fs.readFileSync('apply.out', 'utf8').toString()
           const apply_out = apply_out_file.length > 65000 ? "...\n" + apply_out_file.substring(apply_out_file.length - 65000) : apply_out_file
-          const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
+          //const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
           const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           #### Terraform Apply 📖 \`${{ steps.apply.outcome }}\`
     
