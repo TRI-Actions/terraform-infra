@@ -81,7 +81,7 @@ runs:
           const { execSync } = require('child_process');
 
           let account_diff = [];
-          const stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr)
+          const stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr));
           account_diff = stdout.toString().split('\n');
 
           console.log(`account_diff: ${account_diff}`)
