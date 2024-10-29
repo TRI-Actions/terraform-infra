@@ -83,7 +83,7 @@ runs:
                 console.error(`Fetch error: ${fetchError}`);
                 return;
             }
-          }
+          });
 
           let account_diff = "";
           //"git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq"
