@@ -81,7 +81,7 @@ runs:
           let account_diff;
           runCommand("git diff origin/master --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", account_diff);
 
-          for( let i = 0; i < account_diff.size(); i++) {
+          for( let i = 0; i < account_diff.length; i++) {
             runCommand("rm -rf .terraform");
 
             runCommand("terraform init -no-color -input=false -get=true");
