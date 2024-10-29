@@ -78,7 +78,11 @@ runs:
       with:
         script: |
           const { exec:runCommand } = require('child_process');
-          runCommand("git fetch origin");
+          runCommand("git fetch origin", (fetchError, fetchStdout, fetchStderr) => {
+          if (fetchError) {
+              console.error(`Fetch error: ${fetchError}`);
+              return;
+          }
 
           let account_diff = "";
           //"git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq"
