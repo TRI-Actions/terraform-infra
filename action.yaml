@@ -91,7 +91,7 @@ runs:
                 return;
             }
             console.log(`stdout: ${stdout}`);
-            account_diff = stdout.split('\n');
+            account_diff = stdout;
           });
           console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
