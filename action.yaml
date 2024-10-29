@@ -79,7 +79,8 @@ runs:
         script: |
           const { exec:runCommand } = require('child_process');
           let account_diff = "";
-          runCommand("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq", (error, stdout, stderr) => {
+          //"git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq"
+          runCommand("pwd", (error, stdout, stderr) => {
             if (error) {
                 console.error(`exec error: ${error}`);
                 return;
