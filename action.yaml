@@ -100,6 +100,9 @@ runs:
             //backendConfig.set("dynamodb_table", 'tri_tf_state');
             //backendConfig.set("encrypt", 'true');
 
+            stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+            module = stdout.toString().trim();
+
             process.chdir(`modules/${account_diff[i]}`)
 
             execSync(`terraform init -no-color -input=false -get=true`);
@@ -108,8 +111,7 @@ runs:
 
             let module = "";
             
-            stdout = execSync(`head -n 1 terraform/${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-            module = stdout.toString().trim();
+            
 
             let planOut = "";
             execSync(`terraform plan -target='module.${module}' -out=plan.out`);
