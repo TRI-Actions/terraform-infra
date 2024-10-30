@@ -97,7 +97,7 @@ runs:
 
             process.chdir(`modules/${account_diff[i]}`)
 
-            execSync(`terraform init -no-color -input=false -get=true 
+            execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
               -backend-config="key=${account_diff[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
