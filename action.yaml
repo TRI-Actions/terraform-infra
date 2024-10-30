@@ -99,20 +99,16 @@ runs:
             //backendConfig.set("region", 'us-east-1');
             //backendConfig.set("dynamodb_table", 'tri_tf_state');
             //backendConfig.set("encrypt", 'true');
-
+            
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-            module = stdout.toString().trim();
+            let module = stdout.toString().trim();
 
             process.chdir(`modules/${account_diff[i]}`)
 
             execSync(`terraform init -no-color -input=false -get=true`);
 
             execSync("terraform validate -no-color");
-
-            let module = "";
             
-            
-
             let planOut = "";
             execSync(`terraform plan -target='module.${module}' -out=plan.out`);
 
