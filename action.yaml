@@ -109,7 +109,7 @@ runs:
 
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
-            
+            execSync(`mkdir -p ${account_diff[i]}`)
             execSync(`terraform plan -target='module.${module}' -out=${account_diff[i]}/plan.tfplan`);
             execSync(`terraform show -no-color ${account_diff[i]}/plan.tfplan > plan.out`)
 
