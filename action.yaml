@@ -124,7 +124,7 @@ runs:
             <details><summary>Validation Output</summary>
       
             ~~~
-            ${{ validate_out }}
+            ${validate_out}
             ~~~
       
             </details>
