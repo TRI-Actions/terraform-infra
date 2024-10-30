@@ -79,6 +79,7 @@ runs:
       with:
         script: |
           const { execSync } = require('child_process');
+          const process = require('process');
 
           let account_diff = [];
           let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
@@ -86,7 +87,7 @@ runs:
 
           console.log(`account_diff: ${account_diff}`)
           console.log(`account_diff size: ${account_diff.length}`)
-          execSync("cd terraform");
+          process.chdir('terraform');
           for( let i = 0; i < account_diff.length; i++) {
 
             execSync("rm -rf .terraform");
@@ -99,7 +100,7 @@ runs:
             //backendConfig.set("dynamodb_table", 'tri_tf_state');
             //backendConfig.set("encrypt", 'true');
 
-            execSync(`cd modules/${account_diff[i]}`)
+            process.chdir(`modules/${account_diff[i]}`)
 
             execSync(`terraform init -no-color -input=false -get=true`);
 
@@ -120,7 +121,7 @@ runs:
               repo: context.repo.repo,
               body: output
             })
-            execSync(`cd ../..`)
+            process.chdir(`../..`)
           }
 
     ##############################################
