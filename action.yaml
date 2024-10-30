@@ -110,9 +110,9 @@ runs:
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
             
-            let planOut = "";
-            execSync(`terraform plan -target='module.${module}' -out=plan.out`);
-
+            execSync(`terraform plan -target='module.${module}' -out=plan.tfplan`);
+            execSync(`terraform show -no-color plan.tfplan > plan.out`)
+            
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
             const fs = require('fs')
