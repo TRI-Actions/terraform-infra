@@ -163,7 +163,7 @@ runs:
             check_run_id:  '${{ steps.plan_status_check.outputs.CHECK_ID }}',
             status: 'completed',
             completed_at: formatDate(),
-            conclusion: '${{ steps.apply.conclusion }}'
+            conclusion: '${{ steps.terraform.conclusion }}'
           })
 
     ##############################################
