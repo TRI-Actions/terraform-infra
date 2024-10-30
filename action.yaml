@@ -75,7 +75,7 @@ runs:
 
     - name: Execute terraform plan steps
       id: terraform
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const { execSync } = require('child_process');
@@ -92,23 +92,20 @@ runs:
 
             execSync("rm -rf .terraform");
 
-            let backendConfig = new Map<string, string>([
-              ["key1", "value1"],
-              ["key2", "value2"]
-            ]);
+            let backendConfig = new Map();
 
-            //backendConfig.set("key", `${account_diff[i]}/terraform.tfstate`);
-            //backendConfig.set("bucket", 'tri-tf-state-us-east-1');
-            //backendConfig.set("region", 'us-east-1');
-            //backendConfig.set("dynamodb_table", 'tri_tf_state');
-            //backendConfig.set("encrypt", 'true');
+            backendConfig.set("key", `${account_diff[i]}/terraform.tfstate`);
+            backendConfig.set("bucket", 'tri-tf-state-us-east-1');
+            backendConfig.set("region", 'us-east-1');
+            backendConfig.set("dynamodb_table", 'tri_tf_state');
+            backendConfig.set("encrypt", 'true');
 
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
 
             process.chdir(`modules/${account_diff[i]}`)
 
-            execSync(`terraform init -no-color -input=false -get=true`);
+            execSync(`terraform init -no-color -input=false -get=true ${backendConfig}`);
 
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
