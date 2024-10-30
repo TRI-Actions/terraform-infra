@@ -104,7 +104,7 @@ runs:
               -backend-config="bucket=tri-tf-state-us-east-1" \
               -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
-              -backend-config="dynamodb_table=tri-tf-state" \
+              -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
 
             stdout = execSync("terraform validate -no-color");
