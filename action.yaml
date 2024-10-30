@@ -92,7 +92,7 @@ runs:
 
             execSync("rm -rf .terraform");
 
-            //let backendConfig = new Map<string, string>();
+            let backendConfig = new Map<string, string>();
 
             //backendConfig.set("key", `${account_diff[i]}/terraform.tfstate`);
             //backendConfig.set("bucket", 'tri-tf-state-us-east-1');
@@ -130,7 +130,7 @@ runs:
       
             </details>
       
-            #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+            #### Terraform Plan 📖
       
             <details><summary>Show Plan</summary>
       
