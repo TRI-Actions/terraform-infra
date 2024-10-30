@@ -231,7 +231,7 @@ runs:
 
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const formatDate = () => {
