@@ -95,8 +95,6 @@ runs:
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
 
-            process.chdir(`modules/${account_diff[i]}`);
-
             const repoName = context.repo.repo;
             const firstHyphenIndex = repoName.indexOf('-');
             const lastHyphenIndex = repoName.lastIndexOf('-');
@@ -150,7 +148,6 @@ runs:
                 repo: context.repo.repo,
                 body: output
               })
-            process.chdir(`../..`)
           }
 
     ##############################################
