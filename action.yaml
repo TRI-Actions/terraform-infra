@@ -90,8 +90,6 @@ runs:
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
 
-          console.log(`account_diff: ${account_diff}`)
-          console.log(`account_diff size: ${account_diff.length}`)
           process.chdir('terraform');
           for( let i = 0; i < account_diff.length; i++) {
 
@@ -109,7 +107,7 @@ runs:
 
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
-            execSync(`mkdir -p ${account_diff[i]}`)
+            execSync(`mkdir -p ${account_diff[i]}`);
             execSync(`terraform plan -target='module.${module}' -out=${account_diff[i]}/plan.tfplan`);
             execSync(`terraform show -no-color ${account_diff[i]}/plan.tfplan > plan.out`)
 
@@ -204,8 +202,7 @@ runs:
           let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
-          console.log(`account_diff: ${account_diff}`)
-          console.log(`account_diff size: ${account_diff.length}`)
+
           process.chdir('terraform');
 
           const repoName = context.repo.repo;
@@ -246,7 +243,15 @@ runs:
       
             </details>
             ${truncated_message}`;
+              github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: output
+                })
+            }
           }
+
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
       uses: actions/github-script@v6
