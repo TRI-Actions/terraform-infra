@@ -112,7 +112,7 @@ runs:
             
             execSync(`terraform plan -target='module.${module}' -out=plan.tfplan`);
             execSync(`terraform show -no-color plan.tfplan > plan.out`)
-            
+
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
             const fs = require('fs')
@@ -120,6 +120,7 @@ runs:
             const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
             const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
             const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            #### Changes for Account ${account_diff[i]}
             #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
             <details><summary>Validation Output</summary>
       
