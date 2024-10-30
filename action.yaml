@@ -97,9 +97,9 @@ runs:
 
             process.chdir(`modules/${account_diff[i]}`);
 
-            const repoName = github.context.repo.repo;
+            const repoName = context.repo.repo;
             const firstHyphenIndex = repoName.indexOf('-');
-            const lastHyphenIndex = str.lastIndexOf('-');
+            const lastHyphenIndex = repoName.lastIndexOf('-');
             const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
 
             execSync(`terraform init -no-color -input=false -get=true \
