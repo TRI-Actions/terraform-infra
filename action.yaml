@@ -99,7 +99,7 @@ runs:
 
             execSync(`terraform init -no-color -input=false -get=true 
               -backend-config="bucket=tri-tf-state-us-east-1" \
-              -backend-config="key=${changedAccounts[i]}/terraform.tfstate" \
+              -backend-config="key=${account_diff[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri-tf-state" \
               -backend-config="encrypt=true"`);
