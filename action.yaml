@@ -92,20 +92,17 @@ runs:
 
             execSync("rm -rf .terraform");
 
-            let backendConfig = new Map();
-
-            backendConfig.set("key", `${account_diff[i]}/terraform.tfstate`);
-            backendConfig.set("bucket", 'tri-tf-state-us-east-1');
-            backendConfig.set("region", 'us-east-1');
-            backendConfig.set("dynamodb_table", 'tri_tf_state');
-            backendConfig.set("encrypt", 'true');
-
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
 
             process.chdir(`modules/${account_diff[i]}`)
 
-            execSync(`terraform init -no-color -input=false -get=true ${backendConfig}`);
+            execSync(`terraform init -no-color -input=false -get=true 
+              -backend-config="bucket=tri-tf-state-us-east-1" \
+              -backend-config="key=${key_name}/${changedAccounts[i]}/terraform.tfstate" \
+              -backend-config="region=us-east-1" \
+              -backend-config="dynamodb_table=tri-tf-state" \
+              -backend-config="encrypt=true"`);
 
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
