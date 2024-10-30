@@ -149,6 +149,22 @@ runs:
                 body: output
               })
           }
+    - name: Update Status Check
+      if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const formatDate = () => {
+            return new Date().toISOString()
+          }
+          github.rest.checks.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            check_run_id:  '${{ steps.plan_status_check.outputs.CHECK_ID }}',
+            status: 'completed',
+            completed_at: formatDate(),
+            conclusion: '${{ steps.apply.conclusion }}'
+          })
 
     ##############################################
     #                                            #

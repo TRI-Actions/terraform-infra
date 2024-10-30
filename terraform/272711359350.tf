@@ -12,6 +12,6 @@ provider "aws" {
 
   assume_role {
     role_arn     = "arn:aws:iam::272711359350:role/GithubActionsCrossAccountRole"
-    session_name = "jenkins"
+    session_name = "GithubActions"
   }
 }
