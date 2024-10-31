@@ -9,14 +9,14 @@ runs:
   using: composite
   steps:
     - name: Check out repository code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         ref: ${{ github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number) || '' }}
 
     - name: Get Head Sha
       id: sha
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const pr = await github.rest.pulls.get({
@@ -44,7 +44,7 @@ runs:
     ##############################################
 
     - name: Create plan status check
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       id: plan_status_check
       with:
         script: |
@@ -193,16 +193,23 @@ runs:
           console.log(`Number of approvals: ${approvals}`);
           core.setOutput('approvals', approvals);
 
+
     - name: Fail if No Approvals
       if: steps.count-approvals.outputs.approvals == 0 && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy')
-      shell: bash
-      run: |
-        echo "No approvals found. Ending the workflow."
-        exit 1
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: "No approvals, please have someone review your code"
+          })
+          core.setFailed()
       
     - name: Create apply status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       id: apply_status_check
       with:
         script: |
@@ -279,12 +286,13 @@ runs:
       
             </details>
             ${truncated_message}`;
-              github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: output
-              })
+
+            github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+            })
           }
           
 
