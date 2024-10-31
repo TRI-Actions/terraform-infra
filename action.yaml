@@ -81,37 +81,44 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
+
+          process.chdir('terraform');
+
           let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
+          let stdout = execSync("git diff origin/main --name-only modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
-          console.log(`Account_diff: ${account_diff}`)
+          let current_folders = []
+          stdout = execSync("ls modules")
+          current_folders = stdout.toString().trim().split('\n');
+
+          const intersection = current_folders.filter(value => account_diff.includes(value));
 
           const repoName = context.repo.repo;
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
 
-          process.chdir('terraform');
-          for( let i = 0; i < account_diff.length; i++) {
+          
+          for( let i = 0; i < intersection.length; i++) {
 
             execSync("rm -rf .terraform");
 
-            stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+            stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
 
             execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
-              -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
+              -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
 
             stdout = execSync("terraform validate -no-color");
             let validate_out = stdout.toString().trim();
-            execSync(`mkdir -p ${account_diff[i]}`);
-            execSync(`terraform plan -target='module.${module}' -out=${account_diff[i]}/plan.tfplan`);
-            execSync(`terraform show -no-color ${account_diff[i]}/plan.tfplan > plan.out`)
+            execSync(`mkdir -p ${intersection[i]}`);
+            execSync(`terraform plan -target='module.${module}' -out=${intersection[i]}/plan.tfplan`);
+            execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
@@ -120,7 +127,7 @@ runs:
             const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
             const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
             const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            #### Changes for Account ${account_diff[i]}
+            #### Changes for Account ${intersection[i]}
             #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
             <details><summary>Validation Output</summary>
       
@@ -201,30 +208,38 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
+
+          process.chdir('terraform');
+
           let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
+          let stdout = execSync("git diff origin/main --name-only modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
+
+          let current_folders = []
+          stdout = execSync("ls modules")
+          current_folders = stdout.toString().trim().split('\n');
+
+          const intersection = current_folders.filter(value => account_diff.includes(value));
 
           const repoName = context.repo.repo;
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
           
-          process.chdir('terraform');
-          for( let i = 0; i < account_diff.length; i++) {
+          for( let i = 0; i < intersection.length; i++) {
             execSync("rm -rf .terraform");
 
-            stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+            stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
             
             execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
-              -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
+              -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
             
-            execSync(`terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out`);
+            execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
             const run_link = '<a href="' + run_url + '">Actions</a>.'
