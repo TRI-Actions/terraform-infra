@@ -195,6 +195,7 @@ runs:
 
     - name: Fail if No Approvals
       if: steps.count-approvals.outputs.approvals == 0
+      shell: bash
       run: |
         echo "No approvals found. Ending the workflow."
         exit 1
