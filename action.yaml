@@ -11,6 +11,7 @@ runs:
     - name: Check out repository code
       uses: actions/checkout@v3
       with:
+        fetch-depth: 0
         ref: ${{ github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number) || '' }}
 
     - name: Get Head Sha
@@ -59,41 +60,96 @@ runs:
             status: 'in_progress'
           })
           core.setOutput('CHECK_ID', check.data.id)
+
     - name: Setup Terraform
       uses: infrastructure/setup-terraform@v0.0.1
       with:
         terraform_wrapper: true
-
+    
     - name: Terraform fmt
       id: fmt
       shell: bash
       run: terraform fmt -check
       continue-on-error: false
       working-directory: terraform
-    
-    - name: Terraform Init
-      id: init
-      shell: bash
-      run: terraform init
-      working-directory: terraform
-    
-    - name: Terraform Validate
-      id: validate
-      shell: bash
-      run: terraform validate -no-color
-      working-directory: terraform
 
-    - name: Terraform - Plan
-      id: plan
-      shell: bash
-      run: |
-        terraform plan -no-color -out=${GITHUB_WORKSPACE}/plan.tfplan
-        terraform show -no-color ${GITHUB_WORKSPACE}/plan.tfplan > ${GITHUB_WORKSPACE}/plan.out
-      working-directory: terraform
-    
-    - name: Post plan outputs and update status check
-      if: always() && !contains(github.event.comment.body, 'GithubDeploy')
-      uses: actions/github-script@v6
+    - name: Execute terraform plan steps
+      id: terraform
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const process = require('process');
+
+          let account_diff = [];
+          let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
+          account_diff = stdout.toString().trim().split('\n');
+
+          const repoName = context.repo.repo;
+          const firstHyphenIndex = repoName.indexOf('-');
+          const lastHyphenIndex = repoName.lastIndexOf('-');
+          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+
+          process.chdir('terraform');
+          for( let i = 0; i < account_diff.length; i++) {
+
+            execSync("rm -rf .terraform");
+
+            stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+            let module = stdout.toString().trim();
+
+            execSync(`terraform init -no-color -input=false -get=true \
+              -backend-config="bucket=tri-tf-state-us-east-1" \
+              -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
+              -backend-config="region=us-east-1" \
+              -backend-config="dynamodb_table=tri_tf_state" \
+              -backend-config="encrypt=true"`);
+
+            stdout = execSync("terraform validate -no-color");
+            let validate_out = stdout.toString().trim();
+            execSync(`mkdir -p ${account_diff[i]}`);
+            execSync(`terraform plan -target='module.${module}' -out=${account_diff[i]}/plan.tfplan`);
+            execSync(`terraform show -no-color ${account_diff[i]}/plan.tfplan > plan.out`)
+
+            const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+            const run_link = '<a href="' + run_url + '">Actions</a>.'
+            const fs = require('fs')
+            const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
+            const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
+            const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
+            const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            #### Changes for Account ${account_diff[i]}
+            #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+            <details><summary>Validation Output</summary>
+      
+            ~~~
+            ${validate_out}
+            ~~~
+      
+            </details>
+      
+            #### Terraform Plan 📖
+      
+            <details><summary>Show Plan</summary>
+      
+            ~~~
+            ${plan}
+            ~~~
+      
+            </details>
+
+            Respond with \`GithubDeploy\` to deploy and merge changes.
+            ${truncated_message}`;
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+          }
+    - name: Update Status Check
+      if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
+      uses: actions/github-script@v7
       with:
         script: |
           const formatDate = () => {
@@ -105,44 +161,7 @@ runs:
             check_run_id:  '${{ steps.plan_status_check.outputs.CHECK_ID }}',
             status: 'completed',
             completed_at: formatDate(),
-            conclusion: '${{ steps.plan.conclusion }}'
-          })
-          const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
-          const run_link = '<a href="' + run_url + '">Actions</a>.'
-          const fs = require('fs')
-          const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
-          const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
-          const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
-          const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️ \`${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖 \`${{ steps.validate.outcome }}\`
-          <details><summary>Validation Output</summary>
-    
-          ~~~
-          ${{ steps.validate.outputs.stdout }}
-          ~~~
-    
-          </details>
-    
-          #### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
-    
-          <details><summary>Show Plan</summary>
-    
-          ~~~
-          ${plan}
-          ~~~
-    
-          </details>
-
-          Respond with \`GithubDeploy\` to deploy and merge changes.
-          ${truncated_message}`;
-
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
+            conclusion: '${{ steps.terraform.conclusion }}'
           })
 
     ##############################################
@@ -169,17 +188,71 @@ runs:
             status: 'in_progress'
           })
           core.setOutput('CHECK_ID', check.data.id)
-    - name: Terraform - Apply
+
+    - name: Terraform Apply
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
+      uses: actions/github-script@v7
       id: apply
-      shell: bash
-      run: |
-        terraform apply -auto-approve -no-color ${GITHUB_WORKSPACE}/plan.tfplan > ${GITHUB_WORKSPACE}/apply.out
-      working-directory: terraform
+      with:
+        script: |
+          
+          const { execSync } = require('child_process');
+          const process = require('process');
+
+          let account_diff = [];
+          let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
+          account_diff = stdout.toString().trim().split('\n');
+
+          const repoName = context.repo.repo;
+          const firstHyphenIndex = repoName.indexOf('-');
+          const lastHyphenIndex = repoName.lastIndexOf('-');
+          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+          
+          process.chdir('terraform');
+          for( let i = 0; i < account_diff.length; i++) {
+            execSync("rm -rf .terraform");
+
+            stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+            let module = stdout.toString().trim();
+            
+            execSync(`terraform init -no-color -input=false -get=true \
+              -backend-config="bucket=tri-tf-state-us-east-1" \
+              -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
+              -backend-config="region=us-east-1" \
+              -backend-config="dynamodb_table=tri_tf_state" \
+              -backend-config="encrypt=true"`);
+            
+            execSync(`terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out`);
+
+            const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+            const run_link = '<a href="' + run_url + '">Actions</a>.'
+            const fs = require('fs')
+            const apply_out_file = fs.readFileSync('apply.out', 'utf8').toString()
+            const apply_out = apply_out_file.length > 65000 ? "...\n" + apply_out_file.substring(apply_out_file.length - 65000) : apply_out_file
+            const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
+            const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            #### Terraform Apply 📖
+      
+            <details><summary>Show Apply Output</summary>
+      
+            ~~~
+            ${apply_out}
+            ~~~
+      
+            </details>
+            ${truncated_message}`;
+              github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: output
+              })
+          }
+          
 
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const formatDate = () => {
@@ -193,33 +266,9 @@ runs:
             completed_at: formatDate(),
             conclusion: '${{ steps.apply.conclusion }}'
           })
-          const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
-          const run_link = '<a href="' + run_url + '">Actions</a>.'
-          const fs = require('fs')
-          const apply_out_file = fs.readFileSync('apply.out', 'utf8').toString()
-          const apply_out = apply_out_file.length > 65000 ? "...\n" + apply_out_file.substring(apply_out_file.length - 65000) : apply_out_file
-          const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
-          const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          #### Terraform Apply 📖 \`${{ steps.apply.outcome }}\`
-    
-          <details><summary>Show Apply Output</summary>
-    
-          ~~~
-          ${apply_out}
-          ~~~
-    
-          </details>
-          ${truncated_message}`;
-
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
-          })
 
     - name: Merge Branch
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       if: ${{ job.status == 'success' && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
       with:
         script: |

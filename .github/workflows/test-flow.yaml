@@ -7,6 +7,8 @@ run-name: >-
 permissions: read-all
 
 on:
+  pull_request:
+    types: [opened, synchronize]
   issue_comment:
     types: [created]
 
@@ -25,11 +27,3 @@ jobs:
     steps:
       - name: Run Composite Module
         uses: infrastructure/terraform-infra@test
-
-      - name: Terraform destroy
-        if: always()
-        id: destroy
-        shell: bash
-        run: terraform destroy -auto-approve
-        continue-on-error: true
-        working-directory: terraform
