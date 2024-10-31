@@ -195,6 +195,7 @@ runs:
       id: apply
       with:
         script: |
+          /*
           const { execSync } = require('child_process');
           const process = require('process');
 
@@ -225,7 +226,7 @@ runs:
               -backend-config="encrypt=true"`);
 
             execSync(terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out);
-
+            */
             
           }
 
