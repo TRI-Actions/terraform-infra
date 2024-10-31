@@ -211,13 +211,13 @@ runs:
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
           
-          /*
+          
           for( let i = 0; i < account_diff.length; i++) {
             execSync("rm -rf .terraform");
 
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
-
+            /*
             execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
               -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
@@ -226,9 +226,9 @@ runs:
               -backend-config="encrypt=true"`);
 
             execSync(terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out);
-            
+            */
           }
-          */
+          
 
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
