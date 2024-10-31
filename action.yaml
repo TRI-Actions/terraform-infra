@@ -217,14 +217,14 @@ runs:
 
             stdout = execSync(`head -n 1 ${account_diff[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
-            /*
+            
             execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
               -backend-config="key=${keyName}/${account_diff[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
-
+            /*
             execSync(terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out);
             */
           }
