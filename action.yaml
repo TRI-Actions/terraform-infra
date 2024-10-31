@@ -74,7 +74,6 @@ runs:
       working-directory: terraform
 
     - name: Execute terraform plan steps
-      if: ${{ !contains(github.event.comment.body, 'GithubDeploy') }}
       id: terraform
       uses: actions/github-script@v7
       with:
@@ -141,12 +140,15 @@ runs:
 
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
+              const commentBody = github.event.comment.body;
+              if (commentBody.includes('GithubDeploy')) {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: output
+                })
+              }
           }
     - name: Update Status Check
       if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
