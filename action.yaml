@@ -204,15 +204,12 @@ runs:
           let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
-
-          process.chdir('terraform');
-
           const repoName = context.repo.repo;
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
           
-          
+          process.chdir('terraform');
           for( let i = 0; i < account_diff.length; i++) {
             execSync("rm -rf .terraform");
 
