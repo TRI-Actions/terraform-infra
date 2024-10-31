@@ -225,7 +225,7 @@ runs:
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
             
-            execSync(terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out);
+            execSync(`terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out`);
             
           }
           
