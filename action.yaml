@@ -85,6 +85,8 @@ runs:
           let stdout = execSync("git diff origin/main --name-only terraform/modules | awk -F/ '{ print $3 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
+          console.log(`Account_diff: ${account_diff}`)
+
           const repoName = context.repo.repo;
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
