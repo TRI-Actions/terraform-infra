@@ -149,12 +149,15 @@ runs:
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
 
-            if (github.event_name != 'issue_comment') {
+            const eventName = github.event_name;
+            console.log(`Workflow triggered by ${eventName}.`);
+
+            if (eventName === 'issue_comment') {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: github.event_name
+                body: `testing`
               })
             }
           }
