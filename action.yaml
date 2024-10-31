@@ -224,9 +224,9 @@ runs:
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
-            /*
+            
             execSync(terraform apply -no-color -auto-approve ${account_diff[i]}/plan.tfplan > apply.out);
-            */
+            
           }
           
 
