@@ -149,7 +149,7 @@ runs:
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
 
-            if (github.event.comment.body.includes('githubDeploy')) {
+            if (github.event_name != 'issue_comment') {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
