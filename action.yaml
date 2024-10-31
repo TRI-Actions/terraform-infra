@@ -149,7 +149,7 @@ runs:
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
 
-            const eventName = github.event_name;
+            const eventName = context.event_name;
             console.log(`Workflow triggered by ${eventName}.`);
 
             if (eventName === 'issue_comment') {
