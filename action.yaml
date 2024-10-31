@@ -81,7 +81,6 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
-
           process.chdir('terraform');
 
           let account_diff = [];
@@ -149,12 +148,15 @@ runs:
 
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
+
+            if (github.event.comment.body.includes('githubDeploy')) {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: output
               })
+            }
           }
     - name: Update Status Check
       if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
