@@ -140,7 +140,7 @@ runs:
 
             Respond with \`GithubDeploy\` to deploy and merge changes.
             ${truncated_message}`;
-              const commentBody = github.event.comment.body;
+              const commentBody = context.event.comment.body;
               if (commentBody.includes('GithubDeploy')) {
                 github.rest.issues.createComment({
                   issue_number: context.issue.number,
@@ -271,7 +271,7 @@ runs:
           })
 
     - name: Merge Branch
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       if: ${{ job.status == 'success' && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
       with:
         script: |
