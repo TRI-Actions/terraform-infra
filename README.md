@@ -13,8 +13,7 @@ This is a custom module for use by terraform-<org>-infra repositories, such as t
 
 Testing in this repository works by running the latest changes on the `test` branch. To test the repository:
 
-1. Create a pull request into any branch, ideally main.
-2. Linting will begin execution. To test the branch while this is occuring, make any comment on the repository.
+1. Create a pull request into any branch, ideally main. Testing will begin at once of the branch
 
 After commenting anything, the pipeline under action.yaml will begin executing as normal.
 .github/workflows/test-flow.yaml manages this execution. Any resources created by the custom module will automatically be deleted after creation.
