@@ -195,7 +195,6 @@ runs:
             pull_number: context.issue.number
           });
           const approvals = reviews.data.filter(review => review.state === 'APPROVED').length;
-          console.log(`Number of approvals: ${approvals}`);
           core.setOutput('approvals', approvals);
 
 
