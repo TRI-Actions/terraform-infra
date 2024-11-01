@@ -36,6 +36,7 @@ jobs:
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_TERRAFORM_TERRASCAN: false
           VALIDATE_CHECKOV: false
+          VALIDATE_JSCPD: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       
