@@ -231,7 +231,7 @@ runs:
           core.setOutput('CHECK_ID', check.data.id)
 
     - name: Terraform Apply
-      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && github.rest.pulls.listReviews}}
+      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy')}}
       uses: actions/github-script@v7
       id: apply
       with:
