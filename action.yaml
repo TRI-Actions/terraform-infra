@@ -150,9 +150,8 @@ runs:
             ${truncated_message}`;
 
             const eventName = context.eventName;
-            console.log(`Workflow triggered by ${eventName}.`);
 
-            if (eventName === 'issue_comment') {
+            if (eventName != 'issue_comment') {
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
