@@ -1,6 +1,7 @@
- NOTICE - This repo was copied from https://github.shared-services.aws.tri.global/infrastructure/setup-terraform ref: TRI-40381 
-
 # terraform-infra
+
+ NOTICE - This repository was copied from <https://github.shared-services.aws.tri.global/infrastructure/setup-terraform> - ref: TRI-40381
+
 
 ## A custom GitHub Actions module for terraform-infra pipelines
 
