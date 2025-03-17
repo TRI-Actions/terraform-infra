@@ -64,7 +64,7 @@ runs:
           core.setOutput('CHECK_ID', check.data.id)
 
     - name: Setup Terraform
-      uses: infrastructure/setup-terraform@v0.0.1
+      uses: TRI-IE/setup-terraform@v0.0.1
       with:
         terraform_wrapper: true
     
