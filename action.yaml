@@ -26,7 +26,12 @@ runs:
           });
           const headSha = pr.data.head.sha;
           core.setOutput('sha', headSha)
-    
+    - name: Sign into Shared Services
+      uses: aws-actions/configure-aws-credentials@main
+      with:
+        role-to-assume: arn:aws:iam::371027173325:role/GithubOIDCRole
+        role-session-name: github-actions-session
+        aws-region: us-east-1
 
     - name: Retrieve private access key and ssh hosts
       shell: bash
