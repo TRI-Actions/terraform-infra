@@ -31,9 +31,11 @@ runs:
     - name: Retrieve private access key and ssh hosts
       shell: bash
       run: |
-        aws --region us-east-1 ssm get-parameters --name /tri-ie/SharedServices/JenkinsMaster/GitAccessPrivateKey --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa
-        chmod 0400 ~/.ssh/id_rsa
         mkdir -p ~/.ssh
+        aws --region us-east-1 ssm get-parameters --name /tri-ie/SharedServices/JenkinsMaster/GitAccessPrivateKey --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa
+        aws --region us-east-1 ssm get-parameters --name /tri-ie/SharedServices/JenkinsMaster/GitHubComPrivateKey --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa2
+        chmod 0400 ~/.ssh/id_rsa
+        chmod 0400 ~/.ssh/id_rsa2
         ssh-keyscan -t rsa github.awsinternal.tri.global >> ~/.ssh/known_hosts
         ssh-keyscan -t rsa github.shared-services.aws.tri.global >> ~/.ssh/known_hosts
 
