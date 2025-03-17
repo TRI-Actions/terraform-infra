@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   test-pipeline:
-    runs-on: codebuild-test-codebuild-runner-terraform-infra-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     name: test-workflow
     permissions: write-all
 
