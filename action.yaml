@@ -26,6 +26,7 @@ runs:
           });
           const headSha = pr.data.head.sha;
           core.setOutput('sha', headSha)
+          
     - name: Sign into Shared Services
       uses: aws-actions/configure-aws-credentials@main
       with:
@@ -41,8 +42,6 @@ runs:
         aws --region us-east-1 ssm get-parameters --name /tri-ie/SharedServices/JenkinsMaster/GitHubComPrivateKey --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa2
         chmod 0400 ~/.ssh/id_rsa
         chmod 0400 ~/.ssh/id_rsa2
-        ssh-keyscan -t rsa github.awsinternal.tri.global >> ~/.ssh/known_hosts
-        ssh-keyscan -t rsa github.shared-services.aws.tri.global >> ~/.ssh/known_hosts
 
     ##############################################
     #                                            #
