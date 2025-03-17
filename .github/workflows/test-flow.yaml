@@ -26,4 +26,4 @@ jobs:
     ############## Test your branch by pushing to the test branch of this repo ############################
     steps:
       - name: Run Composite Module
-        uses: infrastructure/terraform-infra@test
+        uses: TRI-IE/terraform-infra@test
