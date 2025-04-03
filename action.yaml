@@ -130,7 +130,7 @@ runs:
           const repoName = context.repo.repo;
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
-          const keyName = "testing" //repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
 
           if(intersection.length == 0) {
             github.rest.issues.createComment({
