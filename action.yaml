@@ -41,7 +41,7 @@ runs:
           const headSha = pr.data.head.sha;
           core.setOutput('sha', headSha)
           
-    - name: Sign into Shared Services
+    - name: Sign into IAM Role
       uses: aws-actions/configure-aws-credentials@main
       with:
         role-to-assume: ${{ inputs.AWS_IAM_Role }}
