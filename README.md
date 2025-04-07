@@ -4,7 +4,7 @@
 
 This is a custom module for use by terraform-<org>-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc.
 
-## How to Use
+## Inputs
 
 There are three inputs with this repo:
 
@@ -29,7 +29,7 @@ SSM_pat can only use one personal access token location.
 
 All variables can be omitted or used
 
-##How to use:
+## How to use:
 
 ```
 jobs:
