@@ -2,7 +2,19 @@
 
 ## A custom GitHub Actions module for terraform-infra pipelines
 
-This is a custom module for use by terraform-NAME-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc. Using this pipeline, you will create a pull request with your repo. The pull request of your repo will execute terraform fmt checks and show a plan. Comment `GithubDeploy` in order to deploy the changes from the terraform plan.
+This is a custom module for use by terraform-NAME-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc. Using this pipeline, you will create a pull request with your repo. The pull request of your repo will execute terraform fmt checks and show a plan. Comment `GithubDeploy` in order to deploy the changes from the terraform plan. Below is the format for your repo.
+
+    └───terraform
+        ├───Account_number_A.tf
+        ├───Account_number_B.tf
+        └───modules
+            ├───Account_number_A
+            |   └───terraform.tf
+            ├───Account_number_B
+            |   └───terraform.tf
+
+The files under modules are where the pipeline will deploy your custom terraform modules. Anything you would like to deploy would be under these modules. This includes providers and other information.
+
 
 ## Prerequisites
     - Terraform statefile bucket must be set up for use
