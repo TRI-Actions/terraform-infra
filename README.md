@@ -2,11 +2,11 @@
 
 ## A custom GitHub Actions module for terraform-infra pipelines
 
-This is a custom module for use by terraform-/<NAME/>-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc.
+This is a custom module for use by terraform-NAME-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc.
 
 ## Prerequisites
     - Terraform statefile bucket must be set up for use
-    - All repos using this pipeline must have the name format terraform-/<NAME/>-infra. Any other format will cause issues
+    - All repos using this pipeline must have the name format terraform-NAME-infra. Any other format will cause issues
 
 
 ## Inputs
