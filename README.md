@@ -4,6 +4,11 @@
 
 This is a custom module for use by terraform-<org>-infra repositories, such as terraform-ss-core-infra, terraform-simm-infra, etc.
 
+## Prerequisites
+    - Terraform statefile bucket must be set up for use
+    - All repos using this pipeline must have the name format terraform<org>-infra. Any other format will cause issues
+
+
 ## Inputs
 
 There are three inputs with this repo:
@@ -27,9 +32,9 @@ If no IAM role is set, it will use whatever is set by default.
 SSM_private keys can have multiple key locations separated by a comma. 
 SSM_pat can only use one personal access token location.
 
-All variables can be omitted or used
+All variables can be omitted or used depending on the context.
 
-## How to use:
+## How to use in Actions Workflow:
 
 ```
 jobs:
