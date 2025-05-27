@@ -92,7 +92,7 @@ runs:
 
           console.log(result.data)
           
-          if (result.data.status === 'behind' or result.data.status === 'diverged') {
+          if (result.data.status === 'behind' || result.data.status === 'diverged') {
             core.setFailed(`❌ The branch '${head}' is behind 'main' by ${result.data.behind_by} commit(s). Please perform git pull to merge branch with main`);
           } else {
             console.log(`✅ The branch '${head}' is up-to-date with 'main'.`);
