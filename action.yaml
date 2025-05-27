@@ -78,7 +78,6 @@ runs:
       uses: actions/github-script@v7
       with:
         script: |
-
           let head, base;
 
           if (context.eventName === 'pull_request') {
