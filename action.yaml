@@ -90,6 +90,7 @@ runs:
             head,
           });
 
+          console.log(result.data)
           if (result.data.status === 'behind') {
             core.setFailed(`❌ The branch '${head}' is behind 'main' by ${result.data.behind_by} commit(s). Please perform git pull to merge branch with main`);
           } else {
