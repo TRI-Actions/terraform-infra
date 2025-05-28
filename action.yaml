@@ -230,13 +230,13 @@ runs:
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
               const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
 
-          <details><summary>Error Output</summary>
+              <details><summary>Error Output</summary>
 
-          ~~~
-          ${errorMsg}
-          ~~~
+              ~~~
+              ${errorMsg}
+              ~~~
 
-          </details>`;
+              </details>`;
 
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
