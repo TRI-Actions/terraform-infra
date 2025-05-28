@@ -247,7 +247,8 @@ runs:
                   body: output
                 })
               }
-              } } catch (error) {
+              }
+            catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
               const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
 
