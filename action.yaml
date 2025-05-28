@@ -221,7 +221,7 @@ runs:
               '<details><summary>Validation Output</summary>',
               '',
               '```bash',
-              `${stdout.toString().replace(/`/g, "'")}`,
+              stdout.toString().replace(/`/g, "'"),
               '```',
               '',
               '</details>',
