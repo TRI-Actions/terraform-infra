@@ -228,7 +228,15 @@ runs:
             }
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
-              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`\n\n<details><summary>Error Output</summary>\n\n ~~~ \n${errorMsg}\n ~~~ \n\n</details>`;
+              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
+
+              <details><summary>Error Output</summary>
+
+              \`\`\`bash
+              ${errorMsg}
+              \`\`\`
+
+              </details>`;
 
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
