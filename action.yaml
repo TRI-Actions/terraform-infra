@@ -40,7 +40,7 @@ runs:
           });
           const headSha = pr.data.head.sha;
           core.setOutput('sha', headSha)
-          
+
     - name: Sign into IAM Role
       if: ${{ inputs.AWS_IAM_Role != '' }}
       uses: aws-actions/configure-aws-credentials@main
@@ -59,7 +59,7 @@ runs:
         for key in "${ITEMS[@]}"; do
           aws --region us-east-1 ssm get-parameters --name "${key}" --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa_${iter}
           chmod 600 ~/.ssh/id_rsa_${iter}
-          
+
           echo -e "Host *\n  IdentityFile ~/.ssh/id_rsa_${iter}\n  StrictHostKeyChecking no" >> ~/.ssh/config
           iter=$((iter + 1))
         done
@@ -69,7 +69,7 @@ runs:
           git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           git config --global credential.helper store
         fi
-      env: 
+      env:
         SSM_PRIVATE_KEYS: ${{ inputs.SSM_private_keys }}
         SSM_PAT: ${{ inputs.SSM_pat }}
 
@@ -146,7 +146,7 @@ runs:
       uses: TRI-Actions/setup-terraform@v0.0.1
       with:
         terraform_wrapper: true
-    
+
     - name: Terraform fmt
       id: fmt
       shell: bash
@@ -189,64 +189,87 @@ runs:
           }
           for( let i = 0; i < intersection.length; i++) {
 
-            execSync("rm -rf .terraform");
+            try {
+              execSync("rm -rf .terraform");
 
-            stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-            let module = stdout.toString().trim();
-            execSync(`terraform init -no-color -input=false -get=true \
-              -backend-config="bucket=tri-tf-state-us-east-1" \
-              -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
-              -backend-config="region=us-east-1" \
-              -backend-config="dynamodb_table=tri_tf_state" \
-              -backend-config="encrypt=true"`);
+              stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
+              let module = stdout.toString().trim();
+              execSync(`terraform init -no-color -input=false -get=true \
+                -backend-config="bucket=tri-tf-state-us-east-1" \
+                -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
+                -backend-config="region=us-east-1" \
+                -backend-config="dynamodb_table=tri_tf_state" \
+                -backend-config="encrypt=true"`);
 
-            stdout = execSync("terraform validate -no-color");
-            let validate_out = stdout.toString().trim();
-            execSync(`mkdir -p ${intersection[i]}`);
-            execSync(`terraform plan -target='module.${module}' -out=${intersection[i]}/plan.tfplan`);
-            execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
+              stdout = execSync("terraform validate -no-color");
+              let validate_out = stdout.toString().trim();
+              execSync(`mkdir -p ${intersection[i]}`);
+              execSync(`terraform plan -target='module.${module}' -out=${intersection[i]}/plan.tfplan`);
+              execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
 
-            const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
-            const run_link = '<a href="' + run_url + '">Actions</a>.'
-            const fs = require('fs')
-            const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
-            const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
-            const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
-            const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            #### Changes for Account ${intersection[i]}
-            #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
-            <details><summary>Validation Output</summary>
-      
-            ~~~
-            ${validate_out}
-            ~~~
-      
-            </details>
-      
-            #### Terraform Plan 📖
-      
-            <details><summary>Show Plan</summary>
-      
-            ~~~
-            ${plan}
-            ~~~
-      
-            </details>
+              const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
+              const run_link = '<a href="' + run_url + '">Actions</a>.'
+              const fs = require('fs')
+              const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
+              const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
+              const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
+              const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              #### Changes for Account ${intersection[i]}
+              #### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`
+              <details><summary>Validation Output</summary>
 
-            Respond with \`GithubDeploy\` to deploy and merge changes.
-            ${truncated_message}`;
+              ~~~
+              ${validate_out}
+              ~~~
 
-            const eventName = context.eventName;
+              </details>
 
-            if (eventName != 'issue_comment') {
+              #### Terraform Plan 📖
+
+              <details><summary>Show Plan</summary>
+
+              ~~~
+              ${plan}
+              ~~~
+
+              </details>
+
+              Respond with \`GithubDeploy\` to deploy and merge changes.
+              ${truncated_message}`;
+
+              const eventName = context.eventName;
+
+              if (eventName != 'issue_comment') {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: output
+                })
+              }
+              } } catch (error) {
+              const errorMsg = error.stderr?.toString() || error.message || error.toString();
+              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
+
+          <details><summary>Error Output</summary>
+
+          ~~~
+          ${errorMsg}
+          ~~~
+
+          </details>`;
+
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: output
-              })
+                body: err_output
+              });
+
+              core.setFailed("Terraform apply failed");
             }
           }
+            }
     - name: Update Status Check
       if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
       uses: actions/github-script@v7
@@ -298,7 +321,7 @@ runs:
 #            body: "No approvals, please have someone review your code"
 #          })
 #          core.setFailed()
-      
+
     - name: Create apply status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
       uses: actions/github-script@v7
@@ -324,7 +347,7 @@ runs:
       id: apply
       with:
         script: |
-          
+
           const { execSync } = require('child_process');
           const process = require('process');
 
@@ -345,20 +368,20 @@ runs:
           const firstHyphenIndex = repoName.indexOf('-');
           const lastHyphenIndex = repoName.lastIndexOf('-');
           const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
-          
+
           for( let i = 0; i < intersection.length; i++) {
             execSync("rm -rf .terraform");
 
             stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
             let module = stdout.toString().trim();
-            
+
             execSync(`terraform init -no-color -input=false -get=true \
               -backend-config="bucket=tri-tf-state-us-east-1" \
               -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
               -backend-config="region=us-east-1" \
               -backend-config="dynamodb_table=tri_tf_state" \
               -backend-config="encrypt=true"`);
-            
+
             execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
 
             const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
@@ -369,13 +392,13 @@ runs:
             const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
             const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             #### Terraform Apply 📖
-      
+
             <details><summary>Show Apply Output</summary>
-      
+
             ~~~
             ${apply_out}
             ~~~
-      
+
             </details>
             ${truncated_message}`;
 
@@ -386,7 +409,7 @@ runs:
                 body: output
             })
           }
-          
+
 
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
@@ -415,4 +438,3 @@ runs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
             });
-  
