@@ -214,7 +214,8 @@ runs:
               const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
               const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
               const output = [
-              `Run [#${process.env.GITHUB_RUN_NUMBER}](${run_url})\n#### Changes for Account \`${intersection[i]}\``,
+              `Run [#${process.env.GITHUB_RUN_NUMBER}](${run_url})\n`,
+              '#### Changes for Account \`${intersection[i]}\`',
               '',
               '#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`',
               '',
