@@ -213,7 +213,7 @@ runs:
               const plan_file = fs.readFileSync('plan.out', 'utf8').toString()
               const plan = plan_file.length > 65000 ? "...\n" + plan_file.substring(plan_file.length - 65000) : plan_file
               const truncated_message = plan_file.length > 65000 ? "Output is too long and was truncated. You can see full plan in " + run_link + "<br /><br />" : ""
-              const output = `Run [#${process.env.GITHUB_RUN_NUMBER}](${run_url})\n#### Changes for Account \`${intersection[i]}\`\n#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`\n\n<details><summary>Validation Output</summary>\n\n~~~\n${validate_out}\n~~~\n\n</details>\n\n#### Terraform Plan 📖\n\n<details><summary>Show Plan</summary>\n\n~~~\n${plan}\n~~~\n\n</details>\n\nRespond with \`GithubDeploy\` to deploy and merge changes.\n${truncated_message}`;
+              const output = `Run [#${process.env.GITHUB_RUN_NUMBER}](${run_url})\n#### Changes for Account \`${intersection[i]}\`\n#### Terraform Format and Style 🖌 \`${{ steps.fmt.outcome }}\`\n\n<details><summary>Validation Output</summary>\n\n ~~~ \n${validate_out}\n ~~~ \n\n</details>\n\n#### Terraform Plan 📖\n\n<details><summary>Show Plan</summary>\n\n ~~~ \n${plan}\n ~~~ \n\n</details>\n\nRespond with \`GithubDeploy\` to deploy and merge changes.\n${truncated_message}`;
 
               const eventName = context.eventName;
 
@@ -228,7 +228,7 @@ runs:
             }
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
-              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`\n\n<details><summary>Error Output</summary>\n\n~~~\n${errorMsg}\n~~~\n\n</details>`;
+              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`\n\n<details><summary>Error Output</summary>\n\n ~~~ \n${errorMsg}\n ~~~ \n\n</details>`;
 
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -252,11 +252,14 @@ runs:
           github.rest.checks.update({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            check_run_id:  '${{ steps.plan_status_check.outputs.CHECK_ID }}',
+            check_run_id:  parseInt(process.env.CHECK_ID),
             status: 'completed',
             completed_at: formatDate(),
-            conclusion: '${{ steps.terraform.conclusion }}'
-          })
+            conclusion: process.env.CHECK_CONCLUSION || 'success'
+          });
+      env:
+        CHECK_ID: ${{ steps.plan_status_check.outputs.CHECK_ID }}
+        CHECK_CONCLUSION: ${{ steps.terraform.conclusion }}
 
     ##############################################
     #                                            #
@@ -361,7 +364,7 @@ runs:
               const apply_out_file = fs.readFileSync('apply.out', 'utf8').toString()
               const apply_out = apply_out_file.length > 65000 ? "...\n" + apply_out_file.substring(apply_out_file.length - 65000) : apply_out_file
               const truncated_message = apply_out_file.length > 65000 ? "Output is too long and was truncated. You can see full apply output in " + run_link + "<br /><br />" : ""
-              const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n#### Terraform Apply 📖\n\n<details><summary>Show Apply Output</summary>\n\n~~~\n${apply_out}\n~~~\n\n</details>\n${truncated_message}`;
+              const output = `Run [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n#### Terraform Apply 📖\n\n<details><summary>Show Apply Output</summary>\n\n ~~~ \n${apply_out}\n ~~~ \n\n</details>\n${truncated_message}`;
 
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -372,7 +375,7 @@ runs:
             }
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
-              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`\n\n<details><summary>Error Output</summary>\n~~~\n${errorMsg}\n~~~\n\n</details>`;
+              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`\n\n<details><summary>Error Output</summary>\n ~~~ \n${errorMsg}\n ~~~ \n\n</details>`;
 
                 github.rest.issues.createComment({
                   issue_number: context.issue.number,
