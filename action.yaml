@@ -225,7 +225,7 @@ runs:
                   body: output
                 })
               }
-              }
+            }
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
               const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
@@ -382,23 +382,22 @@ runs:
               ${truncated_message}`;
 
               github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: output
-              })
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+                });
             }
             catch (error) {
-                const errorMsg = error.stderr?.toString() || error.message || error.toString();
-                const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
+              const errorMsg = error.stderr?.toString() || error.message || error.toString();
+              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
 
-            <details><summary>Error Output</summary>
+              <details><summary>Error Output</summary>
+                ~~~
+                ${errorMsg}
+                ~~~
 
-            ~~~
-            ${errorMsg}
-            ~~~
-
-            </details>`;
+              </details>`;
 
                 github.rest.issues.createComment({
                   issue_number: context.issue.number,
@@ -406,12 +405,9 @@ runs:
                   repo: context.repo.repo,
                   body: err_output
                 });
-
                 core.setFailed("Terraform apply failed");
               }
-            }
           }
-
 
     - name: Post apply outputs and update status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') && always() }}
