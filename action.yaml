@@ -270,7 +270,6 @@ runs:
               core.setFailed("Terraform apply failed");
             }
           }
-            }
     - name: Update Status Check
       if: ${{ github.event.issue.pull_request && !contains(github.event.comment.body, 'GithubDeploy') && always() }}
       uses: actions/github-script@v7
