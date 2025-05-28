@@ -252,13 +252,13 @@ runs:
             }
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
-              const err_output = `❌ Terraform Apply failed for account \`${intersection[i]}\`
+              const err_output = `❌ Terraform Plan failed for account \`${intersection[i]}\`
 
               <details><summary>Error Output</summary>
 
-              \`\`\`bash
+              ~~~
               ${errorMsg}
-              \`\`\`
+              ~~~
 
               </details>`;
 
