@@ -407,7 +407,7 @@ runs:
               '<details><summary>Show Apply Output</summary>',
               '',
               '```bash',
-              `${apply_out.replace(/`/g, "'")}`,
+              apply_out.replace(/`/g, "'"),
               '```',
               '',
               '</details>',
