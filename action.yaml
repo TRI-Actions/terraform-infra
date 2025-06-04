@@ -258,7 +258,7 @@ runs:
                 /\x1b\[[0-9;]*m/g, ''
               );
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
-              const errorMsg = stripAnsi(errorMsgRaw);
+              errorMsg = stripAnsi(errorMsgRaw);
               const err_output = [
               `❌ Terraform Plan failed for account \`${intersection[i]}\``,
               '',
