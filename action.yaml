@@ -232,7 +232,7 @@ runs:
             catch (error) {
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
               const err_output = [
-              `❌ Terraform Plan failed for account \`${intersection[i]}\`,
+              `❌ Terraform Plan failed for account \`${intersection[i]}\``,
               '',
               '<details><summary>Error Output</summary>',
               '',
