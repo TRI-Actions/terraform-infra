@@ -428,7 +428,12 @@ runs:
                 });
             }
             catch (error) {
-              const errorMsg = error.stderr?.toString() || error.message || error.toString();
+              const stripAnsi = (str) => str.replace(
+                // eslint-disable-next-line no-control-regex
+                /\x1b\[[0-9;]*m/g, ''
+              );
+              const errorMsgRaw = error.stderr?.toString() || error.message || error.toString();
+              const errorMsg = stripAnsi(errorMsgRaw);
               const err_output = [
                 `❌ Terraform Apply failed for account \`${intersection[i]}\``,
                 '',
