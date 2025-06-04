@@ -253,7 +253,12 @@ runs:
               }
             }
             catch (error) {
+              const stripAnsi = (str) => str.replace(
+                // eslint-disable-next-line no-control-regex
+                /\x1b\[[0-9;]*m/g, ''
+              );
               const errorMsg = error.stderr?.toString() || error.message || error.toString();
+              const errorMsg = stripAnsi(errorMsgRaw);
               const err_output = [
               `❌ Terraform Plan failed for account \`${intersection[i]}\``,
               '',
