@@ -321,8 +321,6 @@ runs:
           const approvals = reviews.data.filter(review => review.state === 'APPROVED').length;
           core.setOutput('approvals', approvals);
 
-############### Re-add this step after pipeline is stable #########################
-
 #    - name: Fail if No Approvals
 #      if: steps.count-approvals.outputs.approvals == 0 && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy')
 #      uses: actions/github-script@v7
