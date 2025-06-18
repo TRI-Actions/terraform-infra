@@ -198,7 +198,7 @@ runs:
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="dynamodb_table=tri_tf_state" \
+                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
               stdout = execSync("terraform validate -no-color");
@@ -321,8 +321,6 @@ runs:
           const approvals = reviews.data.filter(review => review.state === 'APPROVED').length;
           core.setOutput('approvals', approvals);
 
-############### Re-add this step after pipeline is stable #########################
-
     - name: Fail if No Approvals
       if: steps.count-approvals.outputs.approvals == 0 && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy')
       uses: actions/github-script@v7
@@ -394,7 +392,7 @@ runs:
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="dynamodb_table=tri_tf_state" \
+                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
               execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
