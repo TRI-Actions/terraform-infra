@@ -198,7 +198,7 @@ runs:
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="dynamodb_table=tri_tf_state" \
+                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
               stdout = execSync("terraform validate -no-color");
@@ -394,7 +394,7 @@ runs:
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="dynamodb_table=tri_tf_state" \
+                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
               execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
