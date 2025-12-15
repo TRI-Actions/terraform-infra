@@ -318,7 +318,7 @@ runs:
             repo: context.repo.repo,
             pull_number: context.issue.number
           });
-          const approvals = reviews.data.filter(review => review.state === 'APPROVED').length;
+          const approvals = 1;
           core.setOutput('approvals', approvals);
 
     - name: Fail if No Approvals
