@@ -205,24 +205,7 @@ runs:
               let validate_out = stdout.toString().trim();
               execSync(`mkdir -p ${intersection[i]}`);
               
-              try {
-                // Try to fetch the lock ID from S3
-                const lockId = execSync(
-                  `aws s3 cp s3://tri-tf-state-us-east-1/${keyName}/${intersection[i]}/terraform.tfstate.tflock - 2>/dev/null | jq -r .ID`
-                )
-                  .toString()
-                  .trim();
-
-                if (lockId) {
-                  console.log(`Found lock ID ${lockId}, force-unlocking...`);
-                  execSync(`terraform force-unlock ${lockId} -backend-config="bucket=tri-tf-state-us-east-1" -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" -backend-config="region=us-east-1"`);
-                } else {
-                  console.log('No lock found, skipping force-unlock.');
-                }
-              } catch (err) {
-                console.log('No lock file exists or error reading it, skipping force-unlock.');
-              }
-              execSync(`terraform plan -target='module.${module}' -out=${intersection[i]}/plan.tfplan`);
+              execSync(`terraform plan -target='module.${module}' -lock=false -out=${intersection[i]}/plan.tfplan`);
               execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
 
               const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
@@ -412,7 +395,7 @@ runs:
                 -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
-              execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
+              execSync(`terraform apply -no-color -lock=false -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
 
               const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
               const run_link = '<a href="' + run_url + '">Actions</a>.'
