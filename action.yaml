@@ -204,7 +204,8 @@ runs:
               stdout = execSync("terraform validate -no-color");
               let validate_out = stdout.toString().trim();
               execSync(`mkdir -p ${intersection[i]}`);
-              execSync(`terraform plan -target='module.${module}' -out=${intersection[i]}/plan.tfplan`);
+              
+              execSync(`terraform plan -target='module.${module}' -lock=false -out=${intersection[i]}/plan.tfplan`);
               execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
 
               const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
@@ -363,7 +364,6 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
-
           process.chdir('terraform');
 
           let account_diff = [];
@@ -395,7 +395,7 @@ runs:
                 -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
-              execSync(`terraform apply -no-color -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
+              execSync(`terraform apply -no-color -lock=false -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
 
               const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
               const run_link = '<a href="' + run_url + '">Actions</a>.'
