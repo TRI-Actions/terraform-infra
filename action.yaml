@@ -165,12 +165,15 @@ runs:
           process.chdir('terraform');
 
           let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only modules | awk -F/ '{ print $3 }' | sort | uniq");
+          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $2 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
           let current_folders = []
-          stdout = execSync("ls modules")
+          stdout = execSync("ls")
           current_folders = stdout.toString().trim().split('\n');
+
+          console.log("Accounts with changes: " + account_diff);
+          console.log("Current folders: " + current_folders);
 
           const intersection = current_folders.filter(value => account_diff.includes(value));
 
@@ -190,22 +193,25 @@ runs:
           for( let i = 0; i < intersection.length; i++) {
 
             try {
+              console.log("Processing account: " + intersection[i]);
+
+              process.chdir(intersection[i]);
               execSync("rm -rf .terraform");
 
-              stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-              let module = stdout.toString().trim();
+              console.log("Initializing terraform for account: " + intersection[i]);
               execSync(`terraform init -no-color -input=false -get=true \
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
+              console.log("Validating terraform for account: " + intersection[i]);
               stdout = execSync("terraform validate -no-color");
               let validate_out = stdout.toString().trim();
               execSync(`mkdir -p ${intersection[i]}`);
               
-              execSync(`terraform plan -target='module.${module}' -lock=false -out=${intersection[i]}/plan.tfplan`);
+              console.log("Planning terraform for account: " + intersection[i]);
+              execSync(`terraform plan -lock=false -out=${intersection[i]}/plan.tfplan`);
               execSync(`terraform show -no-color ${intersection[i]}/plan.tfplan > plan.out`)
 
               const run_url = process.env.GITHUB_SERVER_URL + '/' + process.env.GITHUB_REPOSITORY + '/actions/runs/' + process.env.GITHUB_RUN_ID
@@ -279,9 +285,11 @@ runs:
                 body: err_output
               });
 
-              core.setFailed("Terraform apply failed");
+              core.setFailed("Terraform plan failed");
             }
+            process.chdir('..');
           }
+
     - name: Update Status Check
       if: always()
       uses: actions/github-script@v7
@@ -367,13 +375,15 @@ runs:
           process.chdir('terraform');
 
           let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only modules | awk -F/ '{ print $3 }' | sort | uniq");
+          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $2 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
           let current_folders = []
-          stdout = execSync("ls modules")
+          stdout = execSync("ls")
           current_folders = stdout.toString().trim().split('\n');
 
+          console.log("Accounts with changes: " + account_diff);
+          console.log("Current folders: " + current_folders);
           const intersection = current_folders.filter(value => account_diff.includes(value));
 
           const repoName = context.repo.repo;
@@ -383,16 +393,15 @@ runs:
 
           for( let i = 0; i < intersection.length; i++) {
             try {
+              process.chdir(intersection[i]);
               execSync("rm -rf .terraform");
 
               stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-              let module = stdout.toString().trim();
 
               execSync(`terraform init -no-color -input=false -get=true \
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
                 -backend-config="region=us-east-1" \
-                -backend-config="use_lockfile=true" \
                 -backend-config="encrypt=true"`);
 
               execSync(`terraform apply -no-color -lock=false -auto-approve ${intersection[i]}/plan.tfplan > apply.out`);
@@ -424,6 +433,7 @@ runs:
                 repo: context.repo.repo,
                 body: output
                 });
+              process.chdir('..');
             }
             catch (error) {
               const stripAnsi = (str) => str.replace(
