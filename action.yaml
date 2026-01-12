@@ -396,8 +396,6 @@ runs:
               process.chdir(intersection[i]);
               execSync("rm -rf .terraform");
 
-              stdout = execSync(`head -n 1 ${intersection[i]}.tf | awk '{{ print $2 }}' | tr -d '\"'`);
-
               execSync(`terraform init -no-color -input=false -get=true \
                 -backend-config="bucket=tri-tf-state-us-east-1" \
                 -backend-config="key=${keyName}/${intersection[i]}/terraform.tfstate" \
