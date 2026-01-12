@@ -374,6 +374,8 @@ runs:
           stdout = execSync("ls")
           current_folders = stdout.toString().trim().split('\n');
 
+          console.log("Accounts with changes: " + account_diff);
+          console.log("Current folders: " + current_folders);
           const intersection = current_folders.filter(value => account_diff.includes(value));
 
           const repoName = context.repo.repo;
