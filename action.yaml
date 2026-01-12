@@ -165,7 +165,7 @@ runs:
           process.chdir('terraform');
 
           let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $3 }' | sort | uniq");
+          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $2 }' | sort | uniq");
           account_diff = stdout.toString().trim().split('\n');
 
           let current_folders = []
@@ -174,7 +174,7 @@ runs:
 
           console.log("Accounts with changes: " + account_diff);
           console.log("Current folders: " + current_folders);
-          
+
           const intersection = current_folders.filter(value => account_diff.includes(value));
 
           const repoName = context.repo.repo;
