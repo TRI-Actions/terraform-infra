@@ -451,16 +451,17 @@ runs:
                 '```',
                 '',
                 '</details>'
-                ].join('\n');
+              ].join('\n');
 
-                github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: err_output
-                });
-                core.setFailed("Terraform apply failed");
-              }
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: err_output
+              });
+              core.setFailed("Terraform apply failed");
+              return;
+            }
           }
 
     - name: Post apply outputs and update status check
