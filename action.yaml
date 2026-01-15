@@ -460,7 +460,7 @@ runs:
                 body: err_output
               });
               core.setFailed("Terraform apply failed");
-              return;
+              process.chdir('..');
             }
           }
 
