@@ -316,6 +316,7 @@ runs:
     #            Terraform Apply                 #
     #                                            #
     ##############################################
+    
     - name: Count Approvals
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
       id: count-approvals
@@ -413,7 +414,7 @@ runs:
               const output = [
               `Run [#${process.env.GITHUB_RUN_NUMBER}](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`,
               '',
-              '#### Terraform Apply 📖',
+              '#### Terraform Apply \`${intersection[i]}\`📖',
               '',
               '<details><summary>Show Apply Output</summary>',
               '',
@@ -450,16 +451,17 @@ runs:
                 '```',
                 '',
                 '</details>'
-                ].join('\n');
+              ].join('\n');
 
-                github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: err_output
-                });
-                core.setFailed("Terraform apply failed");
-              }
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: err_output
+              });
+              core.setFailed("Terraform apply failed");
+              process.chdir('..');
+            }
           }
 
     - name: Post apply outputs and update status check
