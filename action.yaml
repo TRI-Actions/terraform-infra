@@ -414,7 +414,7 @@ runs:
               const output = [
               `Run [#${process.env.GITHUB_RUN_NUMBER}](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`,
               '',
-              '#### Terraform Apply \`${intersection[i]}\`📖',
+              '#### Terraform Apply 📖',
               '',
               '<details><summary>Show Apply Output</summary>',
               '',
