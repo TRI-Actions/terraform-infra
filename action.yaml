@@ -9,15 +9,12 @@ inputs:
   AWS_IAM_Role:
     description: 'Cross Account role arn to assume to deploy infrastructure'
     required: false
-    type: String
   SSM_private_keys:
     description: "comma separated list of ssm key locations, no spaces"
     required: false
-    type: String
   SSM_pat:
     description: "Location of pat token in SSM"
     required: false
-    type: String
 
 runs:
   using: composite
@@ -316,11 +313,41 @@ runs:
     #            Terraform Apply                 #
     #                                            #
     ##############################################
+    - name: Fetch parameter from SSM
+      id: pat
+      shell: bash
+      run: |
+        PAT=$(aws ssm get-parameter --region us-east-1 --name "/tri-ie/SharedServices/GithubEnterprise/AccessToken" --with-decryption --query 'Parameter.Value' --output text)
+        echo "::add-mask::$PAT"
+        echo "PAT=$PAT" >> $GITHUB_OUTPUT
+        
+    - name: Check if user is in allowed team
+      id: check-team
+      env:
+        ACTOR: ${{ github.actor }}
+        ORG: infrastructure
+        TEAM: ie
+        TOKEN: ${{ steps.pat.outputs.PAT }}
+        GHES_URL: https://github.shared-services.aws.tri.global/api/v3
+      shell: bash
+      run: |
+        echo "Resolving membership for $ACTOR..."
+        membership_resp=$(curl -s -H "Authorization: Bearer $TOKEN" \
+          -H "Accept: application/vnd.github+json" \
+          "$GHES_URL/orgs/$ORG/teams/$TEAM/memberships/$ACTOR")
+        state=$(echo "$membership_resp" | jq -r '.state // "not_found"')
+        if [[ "$state" != "active" ]]; then
+          echo "AUTHORIZED=False" >> $GITHUB_OUTPUT
+          echo "$ACTOR is NOT authorized (state=$state)"
+        else
+          echo "AUTHORIZED=True" >> $GITHUB_OUTPUT
+          echo "$ACTOR is authorized (state=$state)"
+        fi
     
-    - name: Count Approvals
-      if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
-      id: count-approvals
-      uses: actions/github-script@v7
+    - name: Get Approvals
+      if: ${{ steps.check-team.outputs.AUTHORIZED != 'True' }}
+      uses: actions/github-script@v6
+      id: get_approvals
       with:
         script: |
           const reviews = await github.rest.pulls.listReviews({
@@ -328,11 +355,12 @@ runs:
             repo: context.repo.repo,
             pull_number: context.issue.number
           });
-          const approvals = reviews.data.filter(review => review.state === 'APPROVED').length;
-          core.setOutput('approvals', approvals);
 
-    - name: Fail if No Approvals
-      if: steps.count-approvals.outputs.approvals == 0 && github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy')
+          const approvals = reviews.data.filter(r => r.state === "APPROVED")length;
+          core.setOutput('APPROVALS', approvals);
+
+    - name: Post PR not approved comment
+      if: ${{ steps.check-team.outputs.AUTHORIZED != 'True' && stepsget_approvals.outputs.APPROVALS == 0 }}
       uses: actions/github-script@v7
       with:
         script: |
