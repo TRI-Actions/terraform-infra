@@ -360,7 +360,7 @@ runs:
           core.setOutput('APPROVALS', approvals);
 
     - name: Post PR not approved comment
-      if: ${{ steps.check-team.outputs.AUTHORIZED != 'True' && stepsget_approvals.outputs.APPROVALS == 0 }}
+      if: ${{ steps.check-team.outputs.AUTHORIZED != 'True' && steps.get_approvals.outputs.APPROVALS == 0 }}
       uses: actions/github-script@v7
       with:
         script: |
