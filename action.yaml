@@ -356,7 +356,7 @@ runs:
             pull_number: context.issue.number
           });
 
-          const approvals = reviews.data.filter(r => r.state === "APPROVED")length;
+          const approvals = reviews.data.filter(r => r.state === "APPROVED").length;
           core.setOutput('APPROVALS', approvals);
 
     - name: Post PR not approved comment
