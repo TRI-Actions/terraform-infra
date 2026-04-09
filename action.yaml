@@ -47,6 +47,7 @@ runs:
         aws-region: us-east-1
 
     - name: Retrieve private access keys
+      if: ${{ inputs.SSM_private_keys != '' }}
       shell: bash
       run: |
         mkdir -p ~/.ssh
@@ -57,7 +58,7 @@ runs:
           aws --region us-east-1 ssm get-parameters --name "${key}" --with-decryption --query Parameters[0].Value --output text > ~/.ssh/id_rsa_${iter}
           chmod 600 ~/.ssh/id_rsa_${iter}
 
-          echo -e "Host *\n  IdentityFile ~/.ssh/id_rsa_${iter}\n  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo -e "Host *\n  IdentityFile ~/.ssh/id_rsa_${iter}\n  StrictHostKeyChecking accept-new" >> ~/.ssh/config
           iter=$((iter + 1))
         done
 
@@ -115,6 +116,46 @@ runs:
             console.log(`✅ The branch '${head}' is up-to-date with 'main'.`);
           }
 
+    - name: Compute changed accounts
+      id: accounts
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+
+          let base;
+          if (context.eventName === 'pull_request') {
+            base = context.payload.pull_request.base.ref;
+          } else if (context.eventName === 'issue_comment' && context.payload.issue.pull_request) {
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.issue.number,
+            });
+            base = pr.base.ref;
+          } else {
+            base = 'main';
+          }
+
+          process.chdir('terraform');
+
+          const accountDiff = execSync(`git diff origin/${base} --name-only | awk -F/ '{ print $2 }' | sort | uniq`)
+            .toString().trim().split('\n').filter(Boolean);
+
+          const currentFolders = execSync('ls')
+            .toString().trim().split('\n').filter(Boolean);
+
+          const intersection = currentFolders.filter(v => accountDiff.includes(v));
+
+          const repoName = context.repo.repo;
+          const firstHyphenIndex = repoName.indexOf('-');
+          const lastHyphenIndex = repoName.lastIndexOf('-');
+          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+
+          core.setOutput('intersection', JSON.stringify(intersection));
+          core.setOutput('key_name', keyName);
+          core.setOutput('base_branch', base);
+
     ##############################################
     #                                            #
     #            Terraform Plan                  #
@@ -159,25 +200,12 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
+          const intersection = JSON.parse('${{ steps.accounts.outputs.intersection }}');
+          const keyName = '${{ steps.accounts.outputs.key_name }}';
+
           process.chdir('terraform');
 
-          let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $2 }' | sort | uniq");
-          account_diff = stdout.toString().trim().split('\n');
-
-          let current_folders = []
-          stdout = execSync("ls")
-          current_folders = stdout.toString().trim().split('\n');
-
-          console.log("Accounts with changes: " + account_diff);
-          console.log("Current folders: " + current_folders);
-
-          const intersection = current_folders.filter(value => account_diff.includes(value));
-
-          const repoName = context.repo.repo;
-          const firstHyphenIndex = repoName.indexOf('-');
-          const lastHyphenIndex = repoName.lastIndexOf('-');
-          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+          console.log("Accounts with changes: " + intersection);
 
           if(intersection.length == 0) {
             github.rest.issues.createComment({
@@ -346,7 +374,7 @@ runs:
     
     - name: Get Approvals
       if: ${{ steps.check-team.outputs.AUTHORIZED != 'True' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       id: get_approvals
       with:
         script: |
@@ -370,7 +398,7 @@ runs:
             repo: context.repo.repo,
             body: "No approvals, please have someone review your code"
           })
-          core.setFailed()
+          core.setFailed("PR has no approvals — please have someone review your code")
 
     - name: Create apply status check
       if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'GithubDeploy') }}
@@ -401,24 +429,12 @@ runs:
           const { execSync } = require('child_process');
           const process = require('process');
 
+          const intersection = JSON.parse('${{ steps.accounts.outputs.intersection }}');
+          const keyName = '${{ steps.accounts.outputs.key_name }}';
+
           process.chdir('terraform');
 
-          let account_diff = [];
-          let stdout = execSync("git diff origin/main --name-only | awk -F/ '{ print $2 }' | sort | uniq");
-          account_diff = stdout.toString().trim().split('\n');
-
-          let current_folders = []
-          stdout = execSync("ls")
-          current_folders = stdout.toString().trim().split('\n');
-
-          console.log("Accounts with changes: " + account_diff);
-          console.log("Current folders: " + current_folders);
-          const intersection = current_folders.filter(value => account_diff.includes(value));
-
-          const repoName = context.repo.repo;
-          const firstHyphenIndex = repoName.indexOf('-');
-          const lastHyphenIndex = repoName.lastIndexOf('-');
-          const keyName = repoName.substring(firstHyphenIndex + 1, lastHyphenIndex);
+          console.log("Accounts with changes: " + intersection);
 
           for( let i = 0; i < intersection.length; i++) {
             try {
@@ -503,7 +519,7 @@ runs:
           github.rest.checks.update({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            check_run_id:  '${{ steps.apply_status_check.outputs.CHECK_ID }}',
+            check_run_id: parseInt('${{ steps.apply_status_check.outputs.CHECK_ID }}'),
             status: 'completed',
             completed_at: formatDate(),
             conclusion: '${{ steps.apply.conclusion }}'
